@@ -32,7 +32,7 @@
 # print("\nMerger completed Successfully")
 
 # print(f"\nOutput saved to:\n{OUTPUT_FILE}")
-
+from utils.summary import create_summary
 from utils.formatter import format_excel
 import pandas as pd
 from config import INPUT_FOLDER, OUTPUT_FILE
@@ -64,6 +64,7 @@ cleaned_df,stats = clean_data(merged_df)
 cleaned_df.to_excel(OUTPUT_FILE,index=False)
 
 format_excel(OUTPUT_FILE)
+create_summary(OUTPUT_FILE,stats)
 print("\nCleaning Report")
 print("_"*30)
 for key,value in stats.items():
