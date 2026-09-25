@@ -1,0 +1,38 @@
+[
+    {
+        "date_time": "23-09-2026 08:10:45 AM",
+        "input_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/input",
+        "output_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/output",
+        "excel_files": 3,
+        "total_rows": 16,
+        "duplicates_removed": 1,
+        "blank_rows_removed": 0,
+        "final_rows": 15,
+        "processing_time": 0.69,
+        "status": "Success"
+    },
+    {
+        "date_time": "23-09-2026 08:26:14 AM",
+        "input_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/input",
+        "output_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/output",
+        "excel_files": 3,
+        "total_rows": 16,
+        "duplicates_removed": 1,
+        "blank_rows_removed": 0,
+        "final_rows": 15,
+        "processing_time": 0.63,
+        "status": "Success"
+    },
+    {
+        "date_time": "25-09-2026 07:58:39 AM",
+        "input_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/input",
+        "output_folder": "C:/Users/Dell 7480/OneDrive/Desktop/Mission freedom/Python projects/Excel-Automation-toolkit/output",
+        "excel_files": 3,
+        "total_rows": 16,
+        "duplicates_removed": 1,
+        "blank_rows_removed": 0,
+        "final_rows": 15,
+        "processing_time": 1.95,
+        "status": "Success"
+    }
+]

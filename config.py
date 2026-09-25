@@ -4,9 +4,13 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 # Folder paths
-INPUT_FOLDER = BASE_DIR / "input"
-OUTPUT_FOLDER = BASE_DIR / "output"
+input_folder = BASE_DIR / "input"
+output_folder = BASE_DIR / "output"
 LOG_FOLDER = BASE_DIR / "logs"
 
 # Output file
-OUTPUT_FILE = OUTPUT_FOLDER / "merged_output.xlsx"
+OUTPUT_FILE = output_folder / "merged_output.xlsx"
+PDF_FILE=output_folder / "cleaning_report.pdf"
+
+#backup files
+BACKUP_FOLDER=BASE_DIR/"backup"

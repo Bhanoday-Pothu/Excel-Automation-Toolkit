@@ -7,8 +7,8 @@ REQUIRED_COLUMNS = [
 ]
 
 def validate_dataframe(df):
-    print("Validator is running...")
-    #check if file is empty
+    # print("Validator is running...")
+        #check if file is empty
     if df.empty:
         raise ValueError("Excel files is empty.")
     #check required column

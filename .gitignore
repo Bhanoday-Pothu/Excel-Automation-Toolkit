@@ -1,16 +1,38 @@
-# Virtual environment
+# Virtual environments
 .venv/
+.venv_new/
+venv/
+env/
 
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
 
 # VS Code settings
 .vscode/
 
 # Logs
-logs/*.log
+logs/
+*.log
+
+# Generated Excel/output files
+output/*.xlsx
+output/*.csv
+output/*.pdf
+output/*.zip
+
+# Generated backups
+backup/
+
+# Test/sample data
+sample_files/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Python packaging
+*.egg-info/
+dist/
+build/
