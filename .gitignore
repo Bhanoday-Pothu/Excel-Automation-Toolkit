@@ -25,6 +25,9 @@ output/*.zip
 # Generated backups
 backup/
 
+# Application history
+config/history.json
+
 # Test/sample data
 sample_files/
 
