@@ -1,7 +1,8 @@
 import json
 import os
+import csv
 from pathlib import Path
-from tkinter import messagebox, StringVar
+from tkinter import messagebox, StringVar, filedialog
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
@@ -91,6 +92,16 @@ class HistoryPage:
         ).pack(
             side=RIGHT
         )
+        ttk.Button(
+            header,
+            text="📥 Export CSV",
+            command=self.export_history_csv,
+            bootstyle="success"
+        ).pack(
+            side="left",
+            padx=(10, 0)
+        )
+        
 
     # ==================================================
     # SEARCH
@@ -683,7 +694,132 @@ class HistoryPage:
             self.insert_record(record)
 
         self.update_summary(history)
+        return history
+        # ==================================================
+    # EXPORT HISTORY TO CSV
+    # ==================================================
 
+    def export_history_csv(self):
+
+        history = self.load_history()
+
+        if not history:
+
+            messagebox.showinfo(
+                "Export History",
+                "There is no automation history to export."
+            )
+
+            return
+
+        # Ask user where to save the CSV
+        file_path = filedialog.asksaveasfilename(
+            title="Export Automation History",
+            defaultextension=".csv",
+            filetypes=[
+                (
+                    "CSV Files",
+                    "*.csv"
+                ),
+                (
+                    "All Files",
+                    "*.*"
+                )
+            ],
+            initialfile="automation_history.csv"
+        )
+
+        # User cancelled
+        if not file_path:
+            return
+
+        try:
+
+            fieldnames = [
+                "Date & Time",
+                "Input Folder",
+                "Output Folder",
+                "Excel Files",
+                "Total Rows",
+                "Duplicates Removed",
+                "Blank Rows Removed",
+                "Final Rows",
+                "Processing Time",
+                "Status"
+            ]
+
+            with open(
+                file_path,
+                "w",
+                newline="",
+                encoding="utf-8-sig"
+            ) as file:
+
+                writer = csv.DictWriter(
+                    file,
+                    fieldnames=fieldnames
+                )
+
+                writer.writeheader()
+
+                for record in history:
+
+                    writer.writerow({
+                        "Date & Time": record.get(
+                            "date_time",
+                            ""
+                        ),
+                        "Input Folder": record.get(
+                            "input_folder",
+                            ""
+                        ),
+                        "Output Folder": record.get(
+                            "output_folder",
+                            ""
+                        ),
+                        "Excel Files": record.get(
+                            "excel_files",
+                            0
+                        ),
+                        "Total Rows": record.get(
+                            "total_rows",
+                            0
+                        ),
+                        "Duplicates Removed": record.get(
+                            "duplicates_removed",
+                            0
+                        ),
+                        "Blank Rows Removed": record.get(
+                            "blank_rows_removed",
+                            0
+                        ),
+                        "Final Rows": record.get(
+                            "final_rows",
+                            0
+                        ),
+                        "Processing Time": record.get(
+                            "processing_time",
+                            0
+                        ),
+                        "Status": record.get(
+                            "status",
+                            ""
+                        )
+                    })
+
+            messagebox.showinfo(
+                "Export Successful",
+                f"Automation history exported successfully.\n\n"
+                f"File:\n{file_path}"
+            )
+
+        except Exception as e:
+
+            messagebox.showerror(
+                "Export Failed",
+                f"Unable to export automation history.\n\n"
+                f"Error: {e}"
+            )
     # ==================================================
     # UPDATE SUMMARY
     # ==================================================
