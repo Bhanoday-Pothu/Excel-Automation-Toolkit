@@ -1,6 +1,8 @@
 import json
 import os
 import csv
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -739,6 +741,9 @@ class HistoryPage:
             self.insert_record(record)
 
         self.update_summary(history)
+#create analytics chart
+        self.create_processing_time_chart(history)
+        self.create_rows_processed_chart(history)
         return history
         # ==================================================
     # HISTORY ANALYTICS
@@ -1085,12 +1090,11 @@ class HistoryPage:
                 f"Unable to export automation history.\n\n"
                 f"Error: {e}"
             )
-    # ==================================================
-    # UPDATE SUMMARY
-    # ==================================================
-        # ==================================================
-    # UPDATE SUMMARY
-    # ==================================================
+   
+
+# ==================================================
+# UPDATE SUMMARY
+# ==================================================
 
     def update_summary(self, history):
 
@@ -1248,3 +1252,186 @@ class HistoryPage:
                 "History Error",
                 f"Unable to clear history:\n\n{e}"
             )
+# ==================================================
+# PROCESSING TIME CHART
+# ==================================================
+
+    def create_processing_time_chart(self, history):
+    #remove previous chart
+        if hasattr(self,"processing_chart_frame"):
+            try:
+                self.processing_chart_figure.clear()
+                self.processing_chart_frame.destroy()
+            except Exception:
+                pass
+        if not history:
+            return
+
+        chart_frame = ttk.Frame(self.frame)
+
+        chart_frame.pack(
+            fill=X,
+            pady=(0, 20)
+        )
+
+        # Keep only the latest 10 runs
+        chart_history = history[-10:]
+
+        labels = []
+        processing_times = []
+
+        for index, record in enumerate(chart_history, start=1):
+
+            labels.append(
+                f"Run {index}"
+            )
+
+            try:
+                processing_time = float(
+                    record.get("processing_time", 0) or 0
+                )
+            except (TypeError, ValueError):
+                processing_time = 0
+
+            processing_times.append(
+                processing_time
+            )
+
+        figure, axis = plt.subplots(
+            figsize=(10, 3.2)
+        )
+
+        axis.plot(
+            labels,
+            processing_times,
+            marker="o"
+        )
+
+        axis.set_title(
+            "Processing Time per Run"
+        )
+
+        axis.set_xlabel(
+            "Automation Run"
+        )
+
+        axis.set_ylabel(
+            "Processing Time (seconds)"
+        )
+
+        axis.grid(
+            True,
+            alpha=0.3
+        )
+
+        figure.tight_layout()
+
+        canvas = FigureCanvasTkAgg(
+            figure,
+            master=chart_frame
+        )
+
+        canvas.draw()
+
+        canvas.get_tk_widget().pack(
+            fill=BOTH,
+            expand=True
+        )
+
+        # Store references so the chart can be managed later
+        self.processing_chart_frame = chart_frame
+        self.processing_chart_figure = figure
+        self.processing_chart_canvas = canvas
+        # ==================================================
+    # ROWS PROCESSED CHART
+    # ==================================================
+
+    def create_rows_processed_chart(self, history):
+
+        # Remove previous chart
+        if hasattr(self, "rows_chart_frame"):
+
+            try:
+                self.rows_chart_figure.clear()
+                self.rows_chart_frame.destroy()
+            except Exception:
+                pass
+
+        if not history:
+            return
+
+        chart_frame = ttk.Frame(self.frame)
+
+        chart_frame.pack(
+            fill=X,
+            pady=(0, 20)
+        )
+
+        # Keep only the latest 10 runs
+        chart_history = history[-10:]
+
+        labels = []
+        rows_processed = []
+
+        for index, record in enumerate(chart_history, start=1):
+
+            labels.append(
+                f"Run {index}"
+            )
+
+            try:
+                rows = int(
+                    record.get("total_rows", 0) or 0
+                )
+            except (TypeError, ValueError):
+                rows = 0
+
+            rows_processed.append(
+                rows
+            )
+
+        figure, axis = plt.subplots(
+            figsize=(10, 3.2)
+        )
+
+        axis.plot(
+            labels,
+            rows_processed,
+            marker="o"
+        )
+
+        axis.set_title(
+            "Rows Processed per Run"
+        )
+
+        axis.set_xlabel(
+            "Automation Run"
+        )
+
+        axis.set_ylabel(
+            "Rows Processed"
+        )
+
+        axis.grid(
+            True,
+            alpha=0.3
+        )
+
+        figure.tight_layout()
+
+        canvas = FigureCanvasTkAgg(
+            figure,
+            master=chart_frame
+        )
+
+        canvas.draw()
+
+        canvas.get_tk_widget().pack(
+            fill=BOTH,
+            expand=True
+        )
+
+        # Store references
+        self.rows_chart_frame = chart_frame
+        self.rows_chart_figure = figure
+        self.rows_chart_canvas = canvas
