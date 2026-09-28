@@ -29,9 +29,9 @@ class HistoryPage:
 
         self.load_history()
 
-    # ==================================================
-    # HEADER
-    # ==================================================
+# ==================================================
+# HEADER
+# ==================================================
 
     def create_header(self):
 
@@ -115,10 +115,9 @@ class HistoryPage:
             padx=5
         )
         
-
-    # ==================================================
-    # SEARCH
-    # ==================================================
+# ==================================================
+# SEARCH
+# ==================================================
 
     def clear_search_placeholder(self, event=None):
 
@@ -193,9 +192,9 @@ class HistoryPage:
         # Update summary based on filtered results
         self.update_summary(filtered_history)
 
-    # ==================================================
-    # SUMMARY
-    # ==================================================
+# ==================================================
+# SUMMARY
+# ==================================================
 
     def create_summary(self):
 
@@ -233,6 +232,39 @@ class HistoryPage:
             "0",
             "warning"
         )
+
+# ==================================================
+# ANALYTICS
+# ==================================================
+
+        analytics_frame = ttk.Frame(self.frame)
+
+        analytics_frame.pack(
+            fill=X,
+            pady=(0, 20)
+        )
+
+        self.avg_time_label = self.create_summary_card(
+            analytics_frame,
+            "Avg Processing Time",
+            "0 sec",
+            "secondary"
+        )
+
+        self.fastest_run_label = self.create_summary_card(
+            analytics_frame,
+            "Fastest Run",
+            "0 sec",
+            "success"
+        )
+
+        self.duplicates_label = self.create_summary_card(
+            analytics_frame,
+            "Duplicates Removed",
+            "0",
+            "danger"
+        )
+    
 
     def create_summary_card(
         self,
@@ -709,6 +741,82 @@ class HistoryPage:
         self.update_summary(history)
         return history
         # ==================================================
+    # HISTORY ANALYTICS
+    # ==================================================
+
+    def calculate_history_analytics(self, history):
+
+        if not history:
+            return {
+                "total_runs": 0,
+                "total_files": 0,
+                "total_rows": 0,
+                "total_duplicates": 0,
+                "average_processing_time": 0,
+                "fastest_run": 0,
+                "latest_run": ""
+            }
+
+        total_runs = len(history)
+
+        total_files = sum(
+            int(record.get("excel_files", 0) or 0)
+            for record in history
+        )
+
+        total_rows = sum(
+            int(record.get("total_rows", 0) or 0)
+            for record in history
+        )
+
+        total_duplicates = sum(
+            int(record.get("duplicates_removed", 0) or 0)
+            for record in history
+        )
+
+        processing_times = []
+
+        for record in history:
+
+            try:
+                processing_time = float(
+                    record.get("processing_time", 0) or 0
+                )
+
+                processing_times.append(processing_time)
+
+            except (TypeError, ValueError):
+                continue
+
+        if processing_times:
+
+            average_processing_time = round(
+                sum(processing_times) / len(processing_times),
+                2
+            )
+
+            fastest_run = min(processing_times)
+
+        else:
+
+            average_processing_time = 0
+            fastest_run = 0
+
+        latest_run = history[-1].get(
+            "date_time",
+            ""
+        )
+
+        return {
+            "total_runs": total_runs,
+            "total_files": total_files,
+            "total_rows": total_rows,
+            "total_duplicates": total_duplicates,
+            "average_processing_time": average_processing_time,
+            "fastest_run": fastest_run,
+            "latest_run": latest_run
+        }
+        # ==================================================
     # EXPORT HISTORY TO CSV
     # ==================================================
 
@@ -980,6 +1088,9 @@ class HistoryPage:
     # ==================================================
     # UPDATE SUMMARY
     # ==================================================
+        # ==================================================
+    # UPDATE SUMMARY
+    # ==================================================
 
     def update_summary(self, history):
 
@@ -992,14 +1103,26 @@ class HistoryPage:
         )
 
         total_files = sum(
-            int(record.get("excel_files", 0))
+            int(record.get("excel_files", 0) or 0)
             for record in history
         )
 
         total_rows = sum(
-            int(record.get("total_rows", 0))
+            int(record.get("total_rows", 0) or 0)
             for record in history
         )
+
+        # ==================================================
+        # HISTORY ANALYTICS
+        # ==================================================
+
+        analytics = self.calculate_history_analytics(
+            history
+        )
+
+        # ==================================================
+        # EXISTING SUMMARY CARDS
+        # ==================================================
 
         self.total_runs_label.config(
             text=f"{total_runs:,}"
@@ -1015,6 +1138,22 @@ class HistoryPage:
 
         self.rows_label.config(
             text=f"{total_rows:,}"
+        )
+
+        # ==================================================
+        # ANALYTICS CARDS
+        # ==================================================
+
+        self.avg_time_label.config(
+            text=f"{analytics['average_processing_time']:.2f} sec"
+        )
+
+        self.fastest_run_label.config(
+            text=f"{analytics['fastest_run']:.2f} sec"
+        )
+
+        self.duplicates_label.config(
+            text=f"{analytics['total_duplicates']:,}"
         )
 
     # ==================================================
