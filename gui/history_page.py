@@ -1,6 +1,9 @@
 import json
 import os
 import csv
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 from pathlib import Path
 from tkinter import messagebox, StringVar, filedialog
 
@@ -100,6 +103,16 @@ class HistoryPage:
         ).pack(
             side="left",
             padx=(10, 0)
+        )
+        
+        ttk.Button(
+            header,
+            text="📊 Export Excel",
+            command=self.export_history_excel,
+            bootstyle="primary"
+        ).pack(
+            side="left",
+            padx=5
         )
         
 
@@ -806,6 +819,150 @@ class HistoryPage:
                             ""
                         )
                     })
+
+            messagebox.showinfo(
+                "Export Successful",
+                f"Automation history exported successfully.\n\n"
+                f"File:\n{file_path}"
+            )
+
+        except Exception as e:
+
+            messagebox.showerror(
+                "Export Failed",
+                f"Unable to export automation history.\n\n"
+                f"Error: {e}"
+            )
+        # ==================================================
+    # EXPORT HISTORY TO EXCEL
+    # ==================================================
+
+    def export_history_excel(self):
+
+        history = self.load_history()
+
+        if not history:
+
+            messagebox.showinfo(
+                "Export History",
+                "There is no automation history to export."
+            )
+
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            title="Export Automation History to Excel",
+            defaultextension=".xlsx",
+            filetypes=[
+                ("Excel Files", "*.xlsx"),
+                ("All Files", "*.*")
+            ],
+            initialfile="automation_history.xlsx"
+        )
+
+        if not file_path:
+            return
+
+        try:
+
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = "Automation History"
+
+            headers = [
+                "Date & Time",
+                "Input Folder",
+                "Output Folder",
+                "Excel Files",
+                "Total Rows",
+                "Duplicates Removed",
+                "Blank Rows Removed",
+                "Final Rows",
+                "Processing Time",
+                "Status"
+            ]
+
+            worksheet.append(headers)
+
+            # Header formatting
+            for cell in worksheet[1]:
+
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(
+                    horizontal="center",
+                    vertical="center"
+                )
+
+            # Add history records
+            for record in history:
+
+                worksheet.append([
+                    record.get("date_time", ""),
+                    record.get("input_folder", ""),
+                    record.get("output_folder", ""),
+                    record.get("excel_files", 0),
+                    record.get("total_rows", 0),
+                    record.get("duplicates_removed", 0),
+                    record.get("blank_rows_removed", 0),
+                    record.get("final_rows", 0),
+                    record.get("processing_time", 0),
+                    record.get("status", "")
+                ])
+
+            # Alignment
+            for row in worksheet.iter_rows():
+
+                for cell in row:
+
+                    cell.alignment = Alignment(
+                        vertical="center"
+                    )
+
+            # Center numeric/status columns
+            for row in worksheet.iter_rows(
+                min_row=2,
+                min_col=4,
+                max_col=10
+            ):
+
+                for cell in row:
+
+                    cell.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center"
+                    )
+
+            # Auto-size columns
+            for column_cells in worksheet.columns:
+
+                max_length = 0
+                column_letter = get_column_letter(
+                    column_cells[0].column
+                )
+
+                for cell in column_cells:
+
+                    if cell.value is not None:
+
+                        max_length = max(
+                            max_length,
+                            len(str(cell.value))
+                        )
+
+                worksheet.column_dimensions[
+                    column_letter
+                ].width = min(
+                    max_length + 2,
+                    60
+                )
+
+            # Freeze header row
+            worksheet.freeze_panes = "A2"
+
+            # Add Excel filter
+            worksheet.auto_filter.ref = worksheet.dimensions
+
+            workbook.save(file_path)
 
             messagebox.showinfo(
                 "Export Successful",
