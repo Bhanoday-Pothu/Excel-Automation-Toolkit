@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from pathlib import Path
-from tkinter import messagebox, StringVar, filedialog
+from tkinter import messagebox, StringVar, filedialog,Canvas
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
@@ -19,17 +19,119 @@ HISTORY_FILE = Path("config") / "history.json"
 class HistoryPage:
 
     def __init__(self, parent, app):
+
         self.app = app
 
-        self.frame = ttk.Frame(parent)
-        self.frame.pack(fill=BOTH, expand=True)
+        # ==================================================
+        # PAGE CONTAINER
+        # ==================================================
+
+        self.container = ttk.Frame(parent)
+
+        self.container.pack(
+            fill=BOTH,
+            expand=True
+        )
+
+        # ==================================================
+        # SCROLLABLE CANVAS
+        # ==================================================
+
+        self.history_canvas = Canvas(
+            self.container,
+            highlightthickness=0
+        )
+
+        self.history_canvas.pack(
+            side=LEFT,
+            fill=BOTH,
+            expand=True
+        )
+
+        # ==================================================
+        # PAGE SCROLLBAR
+        # ==================================================
+
+        self.history_scrollbar = ttk.Scrollbar(
+            self.container,
+            orient=VERTICAL,
+            command=self.history_canvas.yview
+        )
+
+        self.history_scrollbar.pack(
+            side=RIGHT,
+            fill=Y
+        )
+
+        self.history_canvas.configure(
+            yscrollcommand=self.history_scrollbar.set
+        )
+
+        # ==================================================
+        # SCROLLABLE CONTENT FRAME
+        # ==================================================
+
+        self.frame = ttk.Frame(
+            self.history_canvas
+        )
+
+        self.canvas_window = self.history_canvas.create_window(
+            (0, 0),
+            window=self.frame,
+            anchor="nw"
+        )
+
+        # Update scroll region whenever content changes
+        self.frame.bind(
+            "<Configure>",
+            self.update_history_scrollregion
+        )
+
+        # Keep content width equal to canvas width
+        self.history_canvas.bind(
+            "<Configure>",
+            self.resize_history_canvas
+        )
+
+        # Mouse wheel scrolling
+        self.history_canvas.bind_all(
+            "<MouseWheel>",
+            self.scroll_history
+        )
+
+        # ==================================================
+        # CREATE PAGE
+        # ==================================================
 
         self.create_header()
         self.create_summary()
         self.create_table()
         self.create_buttons()
 
-        self.load_history()
+        self.load_history()  
+        # ==================================================
+    # HISTORY PAGE SCROLLING
+    # ==================================================
+
+    def update_history_scrollregion(self, event=None):
+
+        self.history_canvas.configure(
+            scrollregion=self.history_canvas.bbox("all")
+        )
+
+    def resize_history_canvas(self, event):
+
+        self.history_canvas.itemconfig(
+            self.canvas_window,
+            width=event.width
+        )
+
+    def scroll_history(self, event):
+
+        self.history_canvas.yview_scroll(
+            int(-1 * (event.delta / 120)),
+            "units"
+        )
 
 # ==================================================
 # HEADER
@@ -71,9 +173,14 @@ class HistoryPage:
             "<FocusIn>",
             self.clear_search_placeholder
         )
-
+#filter table while typing
         self.search_entry.bind(
             "<KeyRelease>",
+            self.filter_table_only
+        )
+        
+        self.search_entry.bind(
+            "<Return>",
             self.filter_history
         )
 
@@ -129,7 +236,52 @@ class HistoryPage:
                 0,
                 END
             )
+    def filter_table_only(self, event=None):
 
+        search_text = (
+            self.search_var.get()
+            .strip()
+            .lower()
+        )
+
+        if search_text == "search history...":
+            search_text = ""
+
+        # Clear table
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        if not HISTORY_FILE.exists():
+            return
+
+        try:
+            with open(
+                HISTORY_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
+                history = json.load(file)
+
+        except Exception:
+            return
+
+        for record in reversed(history):
+
+            searchable_text = " ".join([
+                str(record.get("date_time", "")),
+                str(record.get("input_folder", "")),
+                str(record.get("output_folder", "")),
+                str(record.get("status", "")),
+                str(record.get("excel_files", "")),
+                str(record.get("total_rows", "")),
+                str(record.get("duplicates_removed", "")),
+                str(record.get("blank_rows_removed", "")),
+                str(record.get("final_rows", ""))
+            ]).lower()
+
+            if search_text in searchable_text:
+                self.insert_record(record)   
     def filter_history(self, event=None):
 
         search_text = (
@@ -193,6 +345,10 @@ class HistoryPage:
 
         # Update summary based on filtered results
         self.update_summary(filtered_history)
+        # Update charts based on filtered results
+        self.create_processing_time_chart(filtered_history)
+        self.create_rows_processed_chart(filtered_history)
+        self.create_runs_over_time_chart(filtered_history)
 
 # ==================================================
 # SUMMARY
@@ -744,6 +900,8 @@ class HistoryPage:
 #create analytics chart
         self.create_processing_time_chart(history)
         self.create_rows_processed_chart(history)
+        self.create_runs_over_time_chart(history)
+        
         return history
         # ==================================================
     # HISTORY ANALYTICS
@@ -1298,7 +1456,7 @@ class HistoryPage:
             )
 
         figure, axis = plt.subplots(
-            figsize=(10, 3.2)
+            figsize=(10, 2.4)
         )
 
         axis.plot(
@@ -1342,7 +1500,7 @@ class HistoryPage:
         self.processing_chart_frame = chart_frame
         self.processing_chart_figure = figure
         self.processing_chart_canvas = canvas
-        # ==================================================
+    # ==================================================
     # ROWS PROCESSED CHART
     # ==================================================
 
@@ -1391,7 +1549,7 @@ class HistoryPage:
             )
 
         figure, axis = plt.subplots(
-            figsize=(10, 3.2)
+            figsize=(10, 2.4)
         )
 
         axis.plot(
@@ -1435,3 +1593,103 @@ class HistoryPage:
         self.rows_chart_frame = chart_frame
         self.rows_chart_figure = figure
         self.rows_chart_canvas = canvas
+        # ==================================================
+    # RUNS OVER TIME CHART
+    # ==================================================
+
+    def create_runs_over_time_chart(self, history):
+
+        # Remove previous chart
+        if hasattr(self, "runs_chart_frame"):
+
+            try:
+                self.runs_chart_figure.clear()
+                self.runs_chart_frame.destroy()
+            except Exception:
+                pass
+
+        if not history:
+            return
+
+        chart_frame = ttk.Frame(self.frame)
+
+        chart_frame.pack(
+            fill=X,
+            pady=(0, 20)
+        )
+
+        # Count runs by date
+        run_dates = {}
+
+        for record in history:
+
+            date_time = record.get(
+                "date_time",
+                ""
+            )
+
+            if not date_time:
+                continue
+
+            try:
+                run_date = date_time.split(" ")[0]
+            except Exception:
+                continue
+
+            run_dates[run_date] = (
+                run_dates.get(run_date, 0) + 1
+            )
+
+        if not run_dates:
+            return
+
+        labels = list(run_dates.keys())
+        run_counts = list(run_dates.values())
+
+        figure, axis = plt.subplots(
+            figsize=(10, 2.4)
+        )
+
+        axis.bar(
+            labels,
+            run_counts
+        )
+
+        axis.set_title(
+            "Automation Runs Over Time"
+        )
+
+        axis.set_xlabel(
+            "Date"
+        )
+
+        axis.set_ylabel(
+            "Number of Runs"
+        )
+
+        axis.grid(
+            True,
+            axis="y",
+            alpha=0.3
+        )
+
+        figure.autofmt_xdate()
+
+        figure.tight_layout()
+
+        canvas = FigureCanvasTkAgg(
+            figure,
+            master=chart_frame
+        )
+
+        canvas.draw()
+
+        canvas.get_tk_widget().pack(
+            fill=BOTH,
+            expand=True
+        )
+
+        # Store references
+        self.runs_chart_frame = chart_frame
+        self.runs_chart_figure = figure
+        self.runs_chart_canvas = canvas
