@@ -7,7 +7,6 @@ import os
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from automation import run_automation
-from automation import run_automation
 from utils.history import save_history
 
 class AutomationPage:
@@ -430,7 +429,7 @@ class AutomationPage:
 
             return
 #save selected folders for the rest of application
-        self.app.settings["input folder"]=input_path
+        self.app.settings["input_folder"]=input_path
         self.app.settings["output_folder"]=output_path
 
         # --------------------------------------------------
