@@ -8,7 +8,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from automation import run_automation
 from utils.history import save_history
-
+from utils.profiles import get_profile_names
 class AutomationPage:
 
     def __init__(self, parent, app):
@@ -52,6 +52,35 @@ class AutomationPage:
 
         subtitle.pack(
             pady=(0, 20)
+        )
+# --------------------------------------------------
+# Automation Profile
+# --------------------------------------------------
+        profile_label = ttk.Label(
+            self.frame,
+            text="Automation Profile",
+            font=("Segoe UI", 11, "bold")
+        )
+        
+        profile_label.pack(
+            anchor=W,
+            pady=(5,5)
+        )
+        self.profile_var = tk.StringVar(
+            value="Standard CLeaning"
+        )
+	    
+        self.profile_combo = ttk.Combobox(
+            self.frame,
+            textvariable=self.profile_var,
+            values=get_profile_names(),
+            state="readonly",
+            font=("Segoe UI",11)
+            
+        )
+        self.profile_combo.pack(
+            fill=X,
+            pady=(0,10)
         )
 
         # --------------------------------------------------
@@ -504,18 +533,19 @@ class AutomationPage:
     # ======================================================
     # RUN PROCESS
     # ======================================================
-
-    def run_process(
-        self,
-        input_path,
-        output_path
-    ):
+    def run_process(self, input_path, output_path):
 
         try:
+            selected_profile = self.profile_var.get().strip()
+
+            self.write_log(
+                f"Automation Profile : {selected_profile}"
+            )
 
             result = run_automation(
                 Path(input_path),
                 Path(output_path),
+                profile_name=selected_profile,
                 log_callback=self.write_log,
                 progress_callback=self.update_progress
             )
@@ -527,13 +557,14 @@ class AutomationPage:
                 output_path
             )
 
-        except Exception as e:
-
+        except Exception as error:
             self.frame.after(
                 0,
                 self.automation_failed,
-                str(e)
+                error
             )
+    
+            
 
     # ======================================================
     # AUTOMATION COMPLETED

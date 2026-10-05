@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 import time
-
+from utils.profiles import get_profile
 from utils.validator import validate_dataframe
 from utils.summary import create_summary
 from utils.formatter import format_excel
@@ -21,10 +21,15 @@ from config import BACKUP_FOLDER
 def run_automation(
     input_folder,
     output_folder,
+    profile_name="Standard Cleaning",
     log_callback=None,
     progress_callback=None
 ):
     start_time=time.time()
+    profile = get_profile(profile_name)
+    
+    if log_callback:
+        log_callback(f"Profile loaded : {profile_name}")
     """
     Main Excel Automation Function
     """
@@ -171,7 +176,15 @@ def run_automation(
 
             df = pd.read_excel(file)
 
-            validate_dataframe(df)
+            if profile["validate_data"]:
+                validate_dataframe(df)
+                
+                
+                if log_callback:
+                    log_callback("Data validation completed.")
+            else:
+                if log_callback:
+                    log_callback("Data validation skipped by profile.")
 
             log_message(
                 "   ✔ Validation Completed"
@@ -215,8 +228,10 @@ def run_automation(
         log_message("")
         log_message("🧹 Cleaning Data...")
 
-        cleaned_df, stats = clean_data(
-            merged_df
+        merged_df, stats = clean_data(
+            merged_df,
+            remove_duplicates=profile["remove_duplicates"],
+            remove_blank_rows=profile["remove_blank_rows"]
         )
 
         log_message(
@@ -229,7 +244,7 @@ def run_automation(
         # STEP 6 - SAVE EXCEL
         # =========================================
 
-        output_file = (
+        output_excel = (
             output_folder /
             "merged_output.xlsx"
         )
@@ -239,13 +254,13 @@ def run_automation(
             "💾 Saving Excel File..."
         )
 
-        cleaned_df.to_excel(
-            output_file,
+        merged_df.to_excel(
+            output_excel,
             index=False
         )
 
         log_message(
-            f"✔ Excel Saved : {output_file.name}"
+            f"✔ Excel Saved : {output_excel.name}"
         )
 
         # =========================================
@@ -257,9 +272,14 @@ def run_automation(
             "🎨 Formatting Excel..."
         )
 
-        format_excel(
-            output_file
-        )
+        if profile["format_excel"]:
+            format_excel(output_excel)
+            
+            if log_callback:
+                log_callback("Excel formatting completed")
+        else:
+            if log_callback:
+                log_callback("Excel formatting skipped by profile.")
 
         log_message(
             "✔ Formatting Completed"
@@ -276,11 +296,13 @@ def run_automation(
             "📊 Creating Summary Sheet..."
         )
 
-        create_summary(
-            output_file,
-            stats
-        )
-
+        if profile["create_summary"]:
+            create_summary(output_excel, stats)
+            if log_callback:
+                log_callback("Summary sheet created.")
+        else:
+            if log_callback:
+                log_callback("Summary sheet skipped by profile.")
         log_message(
             "✔ Summary Created"
         )
@@ -295,11 +317,15 @@ def run_automation(
         log_message(
             "📈 Creating Charts..."
         )
+        if profile["create_charts"]:
+            create_chart(output_excel)
 
-        create_chart(
-            output_file
-        )
-
+            if log_callback:
+                log_callback("Charts created.")
+        else:
+            if log_callback:
+                log_callback("Charts skipped by profile.")
+        
         log_message(
             "✔ Charts Created"
         )
@@ -316,7 +342,7 @@ def run_automation(
         )
 
         csv_result = excel_to_csv(
-            output_file,
+            output_excel,
             output_folder
         )
 
@@ -343,6 +369,9 @@ def run_automation(
         # =========================================
         # STEP 11 - PDF
         # =========================================
+        # =========================================
+# STEP 11 - PDF
+# =========================================
 
         pdf_file = (
             output_folder /
@@ -354,19 +383,31 @@ def run_automation(
             "📕 Creating PDF Report..."
         )
 
-        create_pdf_report(
-            pdf_file,
-            stats
-        )
+        if profile["generate_pdf"]:
+
+            create_pdf_report(
+                pdf_file,
+                stats
+            )
+
+            if log_callback:
+                log_callback("PDF report created.")
+
+        else:
+
+            if log_callback:
+                log_callback(
+                "PDF report skipped by profile."
+            )
 
         if pdf_file.exists():
 
             log_message(
-                f"✔ PDF Created : {pdf_file.name}"
+                f"✓ PDF Created : {pdf_file.name}"
             )
 
         update_progress(97)
-
+        
         # =========================================
         # STEP 12 - ZIP
         # =========================================
@@ -376,9 +417,17 @@ def run_automation(
             "📦 Creating ZIP Archive..."
         )
 
-        zip_result = create_zip(
-            output_folder
-        )
+        if profile["create_zip"]:
+            zip_result = create_zip(
+                output_folder
+            )
+            
+
+            if log_callback:
+                log_callback("ZIP report created.")
+        else:
+            if log_callback:
+                log_callback("ZIP report skipped by profile.")
 
         # IMPORTANT:
         # create_zip() may return None.
@@ -453,7 +502,7 @@ def run_automation(
         )
 
         log_message(
-            f"📗 Excel : {output_file.name}"
+            f"📗 Excel : {output_excel.name}"
         )
 
         log_message(
