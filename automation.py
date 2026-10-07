@@ -22,12 +22,21 @@ def run_automation(
     input_folder,
     output_folder,
     profile_name="Standard Cleaning",
+    profile_settings=None,
     log_callback=None,
     progress_callback=None
 ):
     start_time=time.time()
-    profile = get_profile(profile_name)
     
+    profile = get_profile(profile_name)
+
+    if profile_settings is not None:
+        profile.update(profile_settings)
+
+    if log_callback:
+        log_callback(
+            f"Profile loaded : {profile_name}"
+        )
     if log_callback:
         log_callback(f"Profile loaded : {profile_name}")
     """

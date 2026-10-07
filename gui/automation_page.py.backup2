@@ -22,69 +22,20 @@ class AutomationPage:
 
         self.app = app
 
-                # --------------------------------------------------
-        # Scrollable Main Frame
+        # --------------------------------------------------
+        # Main Frame
         # --------------------------------------------------
 
-        self.container = ttk.Frame(parent)
-
-        self.container.pack(
-            fill=BOTH,
-            expand=True
-        )
-
-        self.canvas = tk.Canvas(
-            self.container,
-            highlightthickness=0,
-            borderwidth=0
-        )
-
-        self.scrollbar = ttk.Scrollbar(
-            self.container,
-            orient="vertical",
-            command=self.canvas.yview
-        )
-
-        self.canvas.configure(
-            yscrollcommand=self.scrollbar.set
-        )
-
-        self.scrollbar.pack(
-            side=RIGHT,
-            fill=Y
-        )
-
-        self.canvas.pack(
-            side=LEFT,
-            fill=BOTH,
-            expand=True
-        )
-
         self.frame = ttk.Frame(
-            self.canvas,
+            parent,
             padding=20
         )
 
-        self.canvas_window = self.canvas.create_window(
-            (0, 0),
-            window=self.frame,
-            anchor="nw"
+        self.frame.pack(
+            fill=BOTH,
+            expand=True
         )
 
-        self.frame.bind(
-            "<Configure>",
-            self._update_scroll_region
-        )
-
-        self.canvas.bind(
-            "<Configure>",
-            self._resize_canvas_content
-        )
-
-        self.canvas.bind_all(
-            "<MouseWheel>",
-            self._on_mousewheel
-        )
         # --------------------------------------------------
         # Title
         # --------------------------------------------------
@@ -690,28 +641,7 @@ class AutomationPage:
         validate_profile_settings(settings)
 
         return settings
-    
-    def _update_scroll_region(self, event=None):
 
-        self.canvas.configure(
-            scrollregion=self.canvas.bbox("all")
-        )
-    
-
-    def _resize_canvas_content(self, event):
-
-        self.canvas.itemconfig(
-            self.canvas_window,
-            width=event.width
-        )
-
-
-    def _on_mousewheel(self, event):
-
-        self.canvas.yview_scroll(
-            int(-1 * (event.delta / 120)),
-            "units"
-        )
     # ======================================================
     # RUN PROCESS
     # ======================================================
@@ -719,8 +649,6 @@ class AutomationPage:
 
         try:
             selected_profile = self.profile_var.get().strip()
-            
-            current_settings = self.get_current_settings()
 
             self.write_log(
                 f"Automation Profile : {selected_profile}"
@@ -730,7 +658,6 @@ class AutomationPage:
                 Path(input_path),
                 Path(output_path),
                 profile_name=selected_profile,
-                profile_settings=current_settings,
                 log_callback=self.write_log,
                 progress_callback=self.update_progress
             )
