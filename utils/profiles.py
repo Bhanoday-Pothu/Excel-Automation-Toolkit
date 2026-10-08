@@ -1,5 +1,8 @@
 # utils/profiles.py
-
+from utils.custom_profiles import (
+    get_custom_profile_names,
+    get_custom_profile
+)
 PROFILES = {
     "Standard Cleaning": {
         "remove_duplicates": True,
@@ -52,16 +55,28 @@ PROFILES = {
 
 
 def get_profile_names():
-    """Return all available automation profile names."""
-    return list(PROFILES.keys())
+    """Return all built-in and custom automation profile names."""
+
+    built_in_names = list(PROFILES.keys())
+
+    custom_names = get_custom_profile_names()
+
+    return built_in_names + custom_names
 
 
 def get_profile(name):
     """Return a copy of the selected automation profile."""
-    if name not in PROFILES:
-        raise ValueError(f"Unknown automation profile: {name}")
 
-    return PROFILES[name].copy()
+    if name in PROFILES:
+        return PROFILES[name].copy()
+
+    try:
+        return get_custom_profile(name)
+
+    except ValueError:
+        raise ValueError(
+            f"Unknown automation profile: {name}"
+        )
 
 
 def is_valid_profile(name):

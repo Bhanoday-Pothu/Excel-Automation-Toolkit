@@ -1,0 +1,13 @@
+{
+    "My Sales Report": {
+        "remove_duplicates": true,
+        "remove_blank_rows": true,
+        "validate_data": true,
+        "format_excel": true,
+        "create_summary": true,
+        "create_charts": false,
+        "export_csv": true,
+        "generate_pdf": true,
+        "create_zip": true
+    }
+}
