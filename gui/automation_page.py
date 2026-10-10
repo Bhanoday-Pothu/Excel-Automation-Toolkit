@@ -397,6 +397,86 @@ class AutomationPage:
         self.open_button.pack(
             pady=15
         )
+    def save_custom_profile(self):
+        from tkinter import simpledialog
+        from utils.custom_profiles import save_custom_profile
+        from utils.profiles import get_profile_names
+
+        try:
+            # Get the current checkbox settings
+            settings = self.get_current_settings()
+
+            # Ask for a profile name
+            profile_name = simpledialog.askstring(
+                "Save Custom Profile",
+                "Enter a name for your custom profile:",
+                parent=self.frame
+            )
+
+            if profile_name is None:
+                return
+
+            profile_name = profile_name.strip()
+
+            if not profile_name:
+                messagebox.showwarning(
+                    "Invalid Name",
+                    "Profile name cannot be empty."
+                )
+                return
+
+            # Prevent overwriting built-in profiles
+            built_in_profiles = [
+                "Standard Cleaning",
+                "Sales Data",
+                "Customer Data",
+                "Financial Data",
+            ]
+                        # Prevent accidentally overwriting an existing custom profile
+            if profile_name in get_profile_names():
+                messagebox.showwarning(
+                    "Profile Already Exists",
+                    f"The profile '{profile_name}' already exists. "
+                    "Please choose a different name."
+                )
+                return
+
+            if profile_name in built_in_profiles:
+                messagebox.showwarning(
+                    "Invalid Name",
+                    "Choose a different name. Built-in profiles cannot be overwritten."
+                )
+                return
+
+            # Save the custom profile
+            save_custom_profile(
+                profile_name,
+                settings
+            )
+
+            # Refresh the dropdown
+            self.profile_combo["values"] = get_profile_names()
+
+            # Select the newly saved profile
+            self.profile_var.set(profile_name)
+
+            # Refresh the checkboxes
+            self.create_settings_controls()
+
+            messagebox.showinfo(
+                "Profile Saved",
+                f"Custom profile '{profile_name}' saved successfully."
+            )
+
+            self.write_log(
+                f"Custom profile saved: {profile_name}"
+            )
+
+        except Exception as error:
+            messagebox.showerror(
+                "Profile Error",
+                str(error)
+            )
 
     # ======================================================
     # BROWSE INPUT
@@ -620,7 +700,7 @@ class AutomationPage:
         thread.start()
     def create_settings_controls(self):
 
-    # Clear existing controls
+        # Clear existing controls
         for widget in self.settings_frame.winfo_children():
             widget.destroy()
 
@@ -642,6 +722,7 @@ class AutomationPage:
             self.profile_var.get()
         )
 
+        # Create checkboxes
         for setting_key, setting_label in setting_definitions:
 
             variable = tk.BooleanVar(
@@ -660,6 +741,18 @@ class AutomationPage:
                 anchor=W,
                 pady=2
             )
+
+        # Create the save button ONCE, outside the loop
+        self.save_profile_button = ttk.Button(
+            self.settings_frame,
+            text="💾 Save Current Settings as Custom Profile",
+            command=self.save_custom_profile
+        )
+
+        self.save_profile_button.pack(
+            fill=X,
+            pady=(12, 5)
+        )
 
 
     def profile_changed(self, event=None):
