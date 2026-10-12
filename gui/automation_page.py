@@ -753,6 +753,16 @@ class AutomationPage:
             fill=X,
             pady=(12, 5)
         )
+        self.delete_profile_button = ttk.Button(
+            self.settings_frame,
+            text="🗑 Delete Custom Profile",
+            command=self.delete_custom_profile
+        )
+
+        self.delete_profile_button.pack(
+            fill=X,
+            pady=(5, 5)
+        )
 
 
     def profile_changed(self, event=None):
@@ -1008,8 +1018,61 @@ class AutomationPage:
             )
 
         except Exception as e:
-
             messagebox.showerror(
                 "Error",
                 f"Unable to open folder:\n{e}"
+            )
+            
+    def delete_custom_profile(self):
+        from tkinter import messagebox
+        from utils.custom_profiles import (
+            delete_custom_profile as delete_profile
+        )
+        from utils.profiles import (
+            get_profile_names,
+            PROFILES
+        )
+
+        profile_name = self.profile_var.get().strip()
+
+        # Prevent deletion of built-in profiles
+        if profile_name in PROFILES:
+            messagebox.showwarning(
+                "Cannot Delete",
+                "Built-in profiles cannot be deleted."
+            )
+            return
+
+        # Confirm deletion
+        confirmed = messagebox.askyesno(
+            "Delete Custom Profile",
+            f"Are you sure you want to delete '{profile_name}'?"
+        )
+
+        if not confirmed:
+            return
+
+        try:
+            delete_profile(profile_name)
+
+            # Refresh dropdown
+            self.profile_combo["values"] = get_profile_names()
+
+            # Select the default profile
+            self.profile_var.set("Standard Cleaning")
+            self.create_settings_controls()
+
+            self.write_log(
+                f"Custom profile deleted: {profile_name}"
+            )
+
+            messagebox.showinfo(
+                "Profile Deleted",
+                f"Profile '{profile_name}' deleted successfully."
+            )
+
+        except Exception as error:
+            messagebox.showerror(
+                "Profile Error",
+                str(error)
             )

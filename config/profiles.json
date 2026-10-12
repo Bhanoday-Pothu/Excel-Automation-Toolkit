@@ -9,16 +9,5 @@
         "export_csv": true,
         "generate_pdf": true,
         "create_zip": true
-    },
-    "my custom test": {
-        "remove_duplicates": true,
-        "remove_blank_rows": true,
-        "validate_data": true,
-        "format_excel": false,
-        "create_summary": true,
-        "create_charts": false,
-        "export_csv": true,
-        "generate_pdf": true,
-        "create_zip": true
     }
 }
